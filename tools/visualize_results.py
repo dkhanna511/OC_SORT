@@ -21,6 +21,16 @@ MOT17_VIDEO_LEN = {
     "MOT17-13-FRCNN": 750
 }
 
+
+HT21_VIDEO_LEN = {
+    "HT21-11": 585,
+    "HT21-12": 2080,
+    "HT21-13": 1000,
+    "HT21-14": 1050,
+    "HT21-15": 1008,
+    
+}
+
 MOT17_VIDEO_LEN_TEST = {
     "MOT17-01-FRCNN": 600,
     "MOT17-03-FRCNN": 1050,
@@ -40,6 +50,8 @@ MOT20_VIDEO_LEN = {
 
 
 MOT17_VIDEO_SPLIT = dict()
+HT21_VIDEO_SPLIT = dict()
+
 MOT20_VIDEO_SPLIT = dict()
 
 for video_name in MOT17_VIDEO_LEN:
@@ -54,6 +66,11 @@ for video_name in MOT20_VIDEO_LEN:
     MOT20_VIDEO_SPLIT[video_name] = dict()
     MOT20_VIDEO_SPLIT[video_name]["full"] = [1, num_images]
 
+
+for video_name in HT21_VIDEO_LEN:
+    num_images = HT21_VIDEO_LEN[video_name]
+    HT21_VIDEO_SPLIT[video_name] = dict()
+    HT21_VIDEO_SPLIT[video_name]["full"] = [1, num_images]
 
 _COLORS = np.array(
     [
@@ -169,14 +186,22 @@ def visualize_detections(img_dir, out_dir, detections_dir, mode="val_half", path
     elif dataset == "mot20":
         VIDEO_LEN = MOT20_VIDEO_LEN
         VIDEO_SPLIT = MOT20_VIDEO_SPLIT
+    elif dataset == "ht21":
+        VIDEO_LEN = HT21_VIDEO_LEN
+        VIDEO_SPLIT = HT21_VIDEO_SPLIT
     else:
         assert 0
 
     for video_name in VIDEO_LEN:
+        print(" VIDEO LEN is ", VIDEO_LEN)
+        print(" detection dir is : ", detections_dir)
+        # exit(0)
         detection_f = path.format(detections_dir, video_name)
         # detection_f = os.path.join(detections_dir, "{}_detections.txt".format(video_name))
         f = open(detection_f)
         dets = np.loadtxt(f, delimiter=",")
+        print(" video split is : ", VIDEO_SPLIT)
+        # exit(0)
         frame_range = VIDEO_SPLIT[video_name][mode]
         assert(frame_range[1]-frame_range[0] == dets[:, 0].max()-dets[:,0].min())
         frame_gap = dets[:,0].min() - frame_range[0]
@@ -225,15 +250,16 @@ def visualize_tracks(img_dir, out_dir, tracks_dir, mode, dataset="mot17"):
         VIDEO_LEN = MOT17_VIDEO_LEN
     elif dataset == "mot20":
         VIDEO_LEN = MOT20_VIDEO_LEN
+    elif dataset == "mot20":
+        VIDEO_LEN = HT21_VIDEO_LEN
+    
     elif dataset == "dancetrack_val":
-        VIDEO_LEN = os.listdir(tracks_dir)
-        VIDEO_LEN = [d for d in VIDEO_LEN if "dancetrack" in d]
-    elif dataset == "dancetrack_test":
         VIDEO_LEN = os.listdir(tracks_dir)
         VIDEO_LEN = [d for d in VIDEO_LEN if "dancetrack" in d]
     
     # import pdb; pdb.set_trace()
     for video_name in VIDEO_LEN:
+        print("video_name is : ", video_name)
         video_name = video_name.replace(".txt", "")
         track_f = os.path.join(tracks_dir, "{}.txt".format(video_name))
         f = open(track_f)
@@ -242,6 +268,9 @@ def visualize_tracks(img_dir, out_dir, tracks_dir, mode, dataset="mot17"):
             frame_range = MOT17_VIDEO_SPLIT[video_name][mode]
         elif dataset == "mot20":
             frame_range = MOT20_VIDEO_SPLIT[video_name]["full"]
+        elif dataset == "ht21":
+            frame_range = HT21_VIDEO_SPLIT[video_name]["full"]
+        
         elif dataset == "dancetrack_val":
             frame_range = [tracks[:,0].min(), tracks[:,0].max()]
         elif dataset == "dancetrack_test":
@@ -300,6 +329,7 @@ def visualize_tracks(img_dir, out_dir, tracks_dir, mode, dataset="mot17"):
 
 
 def visualize_gt(img_dir, out_dir):
+    
     for video_name in VIDEO_LEN:
         track_f = os.path.join(img_dir, video_name, "gt/gt.txt")
         f = open(track_f)
@@ -396,6 +426,9 @@ if __name__ == "__main__":
         img_dir = "datasets/dancetrack/val"
     elif args.dataset == "dancetrack_test":
         img_dir = "datasets/dancetrack/test"
+    elif args.dataset == "ht21":
+        img_dir = "datasets/HT21/test"
+    
     # result_src_dir = "YOLOX_outputs/"
     # result_src_dir = "evaldata/trackers/mot_challenge/MOT17-val/"
     res_dir = args.res
@@ -408,9 +441,22 @@ if __name__ == "__main__":
     os.makedirs(out_dir, exist_ok=True)
 
     if args.vis == "det":
-        visualize_detections(img_dir, out_dir, res_dir, mode=args.mode)
+        if args.dataset =="ht21":
+            var = "HT21"
+        elif args.dataset == "mot17":
+            var = "mot"
+        elif args.dataset == "mot20":
+            var = "MOT20"
+        res_dir = "datasets/{}/test".format(var)
+        out_dir = "visualizations/{}/dets".format(var)
+        visualize_detections(img_dir, out_dir, res_dir, mode="full", path="{}/{}/det/det.txt", dataset = args.dataset)
+        # visualize_detections(img_dir, out_dir, res_dir, mode=args.mode)
     elif args.vis == "track":
-        visualize_tracks(img_dir, out_dir, res_dir, mode=args.mode, dataset=args.dataset)
+        if args.dataset =="ht21":
+            var = "HT21"
+        res_dir = "datasets/{}/train".format(var)
+        tracks_dir = "{}/{}/det/det.txt"
+        visualize_tracks(img_dir, out_dir, res_dir, tracks_dir= tracks_dir, mode=args.mode, dataset=args.dataset)
     elif args.vis == "merge":
         det_dir = "visualizations/yolox_x_ablation/{}/det".format(args.exp_name)
         track_dir = "visualizations/yolox_x_ablation/{}/track".format(args.exp_name)
