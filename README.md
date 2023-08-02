@@ -97,3 +97,8 @@ If you find this work useful, please consider to cite our paper:
   year={2023}
 }
 ```
+
+
+### Commands helping me to run things
+#### Visualization of HT21 dataset Tracking:
+`python tools/visualize_results.py --img_dir datasets/HT21/train/ --exp_name tracking_results --vis track --dataset ht21`
