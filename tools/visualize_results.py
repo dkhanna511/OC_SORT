@@ -5,7 +5,7 @@ from yolox.utils import vis
 import numpy as np
 import argparse
 import sys
-
+import subprocess
 '''
     MOT submission format:
     <frame>, <id>, <bb_left>, <bb_top>, <bb_width>, <bb_height>, <conf>, <x>, <y>, <z>
@@ -250,7 +250,7 @@ def visualize_tracks(img_dir, out_dir, tracks_dir, mode, dataset="mot17"):
         VIDEO_LEN = MOT17_VIDEO_LEN
     elif dataset == "mot20":
         VIDEO_LEN = MOT20_VIDEO_LEN
-    elif dataset == "mot20":
+    elif dataset == "ht21":
         VIDEO_LEN = HT21_VIDEO_LEN
     
     elif dataset == "dancetrack_val":
@@ -275,7 +275,7 @@ def visualize_tracks(img_dir, out_dir, tracks_dir, mode, dataset="mot17"):
             frame_range = [tracks[:,0].min(), tracks[:,0].max()]
         elif dataset == "dancetrack_test":
             frame_range = [tracks[:,0].min(), tracks[:,0].max()]
-        assert(frame_range[1]-frame_range[0] == tracks[:, 0].max()-tracks[:,0].min())
+        # assert(frame_range[1]-frame_range[0] == tracks[:, 0].max()-tracks[:,0].min())
         frame_gap = tracks[:,0].min() - frame_range[0]
         video_img_dir = os.path.join(img_dir, video_name, "img1")
         video_out_dir = os.path.join(out_dir, video_name)
@@ -325,7 +325,8 @@ def visualize_tracks(img_dir, out_dir, tracks_dir, mode, dataset="mot17"):
                 cv2.putText(img, "%06d.jpg" % real_frame_ind, (10, 20), font, 0.6, (255,255,255), thickness=2)
                 cv2.imwrite(os.path.join(video_out_dir, "%06d.jpg" % real_frame_ind), img)
         cmd = "ffmpeg -framerate 5 -pattern_type glob -i '{}/*.jpg' -c:v libx264 -pix_fmt yuv420p {}/{}.mp4".format(video_out_dir, out_dir, video_name)
-        os.popen(cmd)
+        subprocess.call(cmd, shell = True)
+
 
 
 def visualize_gt(img_dir, out_dir):
@@ -374,7 +375,7 @@ def visualize_gt(img_dir, out_dir):
             cv2.putText(img, "%06d.jpg" % real_frame_ind, (10, 20), font, 0.6, (255,255,255), thickness=2)
             cv2.imwrite(os.path.join(video_out_dir, "%06d.jpg" % real_frame_ind), img)
         cmd = "ffmpeg -framerate 5 -pattern_type glob -i '{}/*.jpg' -c:v libx264 -pix_fmt yuv420p {}/{}.mp4".format(video_out_dir, out_dir, video_name)
-        os.popen(cmd)
+        # os.popen(cmd)
 
 
 def merge_visualization(det_dir, track_dir, gt_dir, out_dir):
@@ -454,9 +455,9 @@ if __name__ == "__main__":
     elif args.vis == "track":
         if args.dataset =="ht21":
             var = "HT21"
-        res_dir = "datasets/{}/train".format(var)
-        tracks_dir = "{}/{}/det/det.txt"
-        visualize_tracks(img_dir, out_dir, res_dir, tracks_dir= tracks_dir, mode=args.mode, dataset=args.dataset)
+            # res_dir = "datasets/{}/train".format(var)
+            tracks_dir = "datasets/HT21/FM_OCSORT"
+        visualize_tracks(img_dir, out_dir, tracks_dir= tracks_dir, mode=args.mode, dataset=args.dataset)
     elif args.vis == "merge":
         det_dir = "visualizations/yolox_x_ablation/{}/det".format(args.exp_name)
         track_dir = "visualizations/yolox_x_ablation/{}/track".format(args.exp_name)
